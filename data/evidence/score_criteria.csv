@@ -1,0 +1,7 @@
+Score dimension,Weight % [A],Evidence used to compare viable candidates
+Annual accepted heat at the customer meter,30,"P50 metered acceptance versus reference module output, by season"
+Net cost per delivered MWh,25,"Discounted incremental cost after lift, losses, standby and pipe works"
+Grid delivery and decarbonisation,20,"Firm date, reinforcement exposure, interval-matched clean supply"
+Cooling and water resilience,10,Design-weather heat rejection with one train out and buyer offline
+Spatial and circular delivery,10,"Reuse of serviced land/building, lifetimes and local recovery contracts"
+Fibre/service resilience beyond gate,5,Verified independent routes and repair provisions

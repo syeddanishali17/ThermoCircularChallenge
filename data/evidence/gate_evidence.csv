@@ -1,0 +1,8 @@
+Gate,Required parcel-level evidence,Accountable party
+Grid,"DSO letter with firm import and dates per phase, contingency, heat-pump meter and reinforcement funding.",Electrical lead + DSO
+Land and pipe route,"Title or option, zoning and access, plant footprint, utility wayleaves, constructible pipe crossings.",Land and planning lead
+Fibre,"Two carrier route drawings, independent duct/bridge/PoP, latency and restoration evidence.",Network lead + carriers
+Hazards and ground,"Flood levels, emergency access, boreholes, ground bearing, contamination, groundwater, seismic anchorage.",Civil and structural lead
+Water,"Make-up and cleaning balance, drought restrictions, quality, discharge consent, fallback operation.",Water authority + engineer
+Permitting,"Authority pre-application confirms applicable building, plant, environmental and heat-reuse route.",Planning lead
+Heat customer,"Signed technical heads of terms, distinct load and dispatch traces, temperature curves, seasonal curtailment.",Utility + anchor owner

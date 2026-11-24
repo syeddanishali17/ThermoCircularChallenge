@@ -1,0 +1,5 @@
+vendor/audited_model/** -text
+data/source_manifest.json -text
+data/evidence/** -text
+*.py text eol=lf
+*.bat text eol=crlf

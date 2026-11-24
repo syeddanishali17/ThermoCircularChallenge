@@ -1,0 +1,12 @@
+ID,Decision,Status,Verification
+R01,100 MW utility connection and parcel,Unconfirmed. The simulated peak is not a design peak or written offer.,"Obtain DSO commitments, peak and N-1 studies and parcel access. Phase or relocate if insufficient."
+R02,"Heat tariff, take-up and counterfactual",Synthetic demand and €85/MWh assumption. No signed offtake.,"Obtain 12 months of acceptance and temperatures, backup terms and displaced source."
+R03,Heat route and water approvals,"One kilometre, €2m and 5% losses are screening assumptions.",Price civil works and permits with named roles. Measure losses and water input at the pilot.
+R04,Heat plant performance,Temperature-shaped COP and 80% accessible IT heat are modeled.,"Obtain compressor and cooling OEM curves, pump loads, temperatures and independent rejection tests."
+R05,Power and environmental accounts,"123 g/kWh estimate, synthetic hourly matching profile and annual prices.",Replace with reporting-year location factor and site-specific contract data. Record marginal and eligible contractual emissions separately.
+R06,Supply and maintenance,"Supplier lead times, alternative regional vendors, inventory and spare commitments pending.",Obtain competitive quotes and guaranteed service windows. Treat delays as critical path scenarios.
+R07,Digital dispatch,No physical prototype yet. Advisory operating screen with binary economic/carbon choice.,"Test stale or missing data, physical temperature constraints, live safe fallback and optional control stability."
+R08,Circularity,Part footprint documented. Facility mass inventory and vendor commitments incomplete.,"Audit EPDs, count and mass-based return rates and traceable downstream recovery."
+R09,Heat purchase beyond one module,Incremental base NPV negative.,Use measured incremental acceptance and its tariff before committing.
+R10,Climate-neutral 2035,Conditional pathway based on modeled rates.,"Audit Scope 1, Scope 2 and Scope 3 and residual treatment."
+R11,Language and delivery,English working deliverable. Organiser confirmation pending.,"Confirm permitted language, attachments and submission cut-off."
