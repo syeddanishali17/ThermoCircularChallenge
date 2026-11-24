@@ -38,12 +38,13 @@ def cashflows(run):
          tr("Levelised break-even for dispatched heat.", "Kostendeckender Preis der gelieferten Wärme.")),
     ])
     fig = go.Figure(go.Waterfall(
-        x=[tr("Heat revenue", "Wärmeerlös"), tr("Electricity", "Strom"), tr("Fixed O&M", "Fixe Betriebskosten"),
-           tr("Heat capex", "Investitionskosten"), "NPV"],
+        x=[tr("Heat sales", "Wärmeerlös"), tr("Power", "Strom"), tr("Fixed O&M", "Fixe Kosten"),
+           tr("Heat capex", "Wärme-CAPEX"), tr("NPV", "Kapitalwert")],
         y=[ANNUITY * f["Revenue"], -ANNUITY * f["Power cost"], -ANNUITY * f["Fixed O&M"], -f["Capex"], 0],
         measure=["relative", "relative", "relative", "relative", "total"],
         increasing={"marker": {"color": TEAL}}, decreasing={"marker": {"color": ORANGE}},
     ))
+    fig.update_xaxes(tickangle=-30)
     chart(fig, tr("Discounted €m", "Diskontierte Mio. €"))
     payback = r["heat_payback_years"]
     st.write(f"{tr('Simple payback', 'Einfache Amortisation')} · "
@@ -96,7 +97,7 @@ def sensitivity(run):
         _, tariffs, route, values, _ = grid
         fig = go.Figure(go.Heatmap(
             x=route, y=tariffs, z=values, colorscale=[[0, "#a34223"], [.5, "#f8f5ee"], [1, "#126f70"]],
-            zmid=0, colorbar=dict(title="NPV €m"), hoverongaps=False,
+            zmid=0, colorbar=dict(title="NPV €m", thickness=12, tickfont=dict(size=12)), hoverongaps=False,
             hovertemplate="%{x:.2f} km<br>%{y:.2f} €/MWhth<br>NPV %{z:.3f} €m<extra></extra>",
         ))
         chart(fig, "€/MWhth", tr("Pipe route [km]", "Leitungsstrecke [km]"))
@@ -115,7 +116,7 @@ def sensitivity(run):
         b = evaluate_one_module(a, run.payload, {})["heat_15y_NPV_MEUR"]
         fields = {
             "heat_tariff": "Heat tariff", "pipe_km": "Pipe distance", "price_multiplier": "Power price",
-            "heat_scale": "Buyer demand", "cop": "COP", "nonpipe_stage_one_m": "Non-pipe civil / equipment",
+            "heat_scale": "Buyer demand", "cop": "COP", "nonpipe_stage_one_m": "Non-pipe capex",
             "grid_mw": "Grid capacity", "module_mw": "Heat module size",
         }
         rows = []
@@ -141,8 +142,9 @@ def sensitivity(run):
         order = result[1].assign(span=lambda frame: (frame["Upper input Δ NPV"] - frame["Lower input Δ NPV"]).abs())
         order = order.sort_values("span", na_position="first").drop(columns="span")
         fig = go.Figure()
-        for key, color in (("Lower input Δ NPV", TEAL), ("Upper input Δ NPV", ORANGE)):
-            fig.add_bar(y=order.index, x=order[key], orientation="h", name=key, marker_color=color)
+        for key, label, color in (("Lower input Δ NPV", tr("Lower input", "Unterer Wert"), TEAL),
+                                  ("Upper input Δ NPV", tr("Upper input", "Oberer Wert"), ORANGE)):
+            fig.add_bar(y=order.index, x=order[key], orientation="h", name=label, marker_color=color)
         fig.update_layout(barmode="group")
         chart(fig, None, "Δ NPV €m", height=450)
         table(order, hide_index=False)
@@ -165,7 +167,7 @@ def page(run):
         fig = go.Figure(go.Bar(
             x=[str(i) for i in steps.index], y=values,
             marker_color=[TEAL if value >= 0 else ORANGE for value in values],
-            text=[fmt(value, 3, True) for value in values], textposition="outside", cliponaxis=False,
+            hovertemplate="%{y:+.3f} €m<extra></extra>",
         ))
         fig.update_xaxes(type="category")
         chart(fig, tr("15-year heat NPV [€m]", "Kapitalwert Wärme über 15 Jahre [Mio. €]"),

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img">
+  <title>ThermoCircular</title>
+  <rect width="64" height="64" rx="15" fill="#10283b"/>
+  <path d="M13 33a19 19 0 0 1 32-14l3 3m0 0v-8m0 8h-8"
+        fill="none" stroke="#83caff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M51 31a19 19 0 0 1-32 14l-3-3m0 0v8m0-8h8"
+        fill="none" stroke="#74e8c4" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#e6f5fc">
+    <rect x="24" y="23" width="16" height="5" rx="1.7"/>
+    <rect x="24" y="30" width="16" height="5" rx="1.7"/>
+    <rect x="24" y="37" width="16" height="5" rx="1.7"/>
+  </g>
+  <path d="M28 25.5h2m-2 7h2m-2 7h2" stroke="#0c6b60" stroke-width="1.8" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 225" role="img">
+  <title>Conceptual ThermoCircular data centre</title>
+  <desc>Electricity flows from the grid to the server hall. Warm liquid flows to the heat pump. The heat pump feeds the district heating network.</desc>
+  <defs>
+    <linearGradient id="rack" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#2a4561"/><stop offset="1" stop-color="#132b42"/>
+    </linearGradient>
+    <linearGradient id="pad" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#20394f"/><stop offset="1" stop-color="#142b40"/>
+    </linearGradient>
+    <g id="server">
+      <path d="m0 0 12-8 32 0-12 8Z" fill="#395a76"/>
+      <path d="M32 0 44-8v66l-12 8Z" fill="#14283c" stroke="#3f6380"/>
+      <rect width="32" height="66" rx="2" fill="url(#rack)" stroke="#4f7893"/>
+      <path d="M5 11h22M5 22h22M5 33h22M5 44h22M5 55h22" stroke="#7596ac" stroke-opacity=".55"/>
+      <g fill="#79ebc5"><circle cx="7" cy="8" r="1.4"/><circle cx="7" cy="19" r="1.4"/><circle cx="7" cy="30" r="1.4"/><circle cx="7" cy="41" r="1.4"/><circle cx="7" cy="52" r="1.4"/></g>
+    </g>
+  </defs>
+  <style>
+    .pulse { stroke-dasharray: 5 25; animation: flow 1.9s linear infinite; }
+    .thermal { animation-duration: 2.4s; }
+    .return { animation-direction: reverse; animation-duration: 3.1s; }
+    @keyframes flow { to { stroke-dashoffset: -60; } }
+    @media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
+  </style>
+  <path d="M19 133 142 66h375l-8 62-124 68H38Z" fill="url(#pad)" stroke="#31526b"/>
+  <g stroke="#3c5970" stroke-opacity=".48" fill="none">
+    <path d="M42 166h393M31 151h430M64 132h435M91 115h402M115 97h382"/>
+    <path d="m80 134 124-67m-88 123L344 67m-170 124L402 67m-172 124L458 67m-170 124L514 67"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M67 139h67l25-14h74M253 139h52l27-15h23m37 10h50l38-20h25M505 125h-23l-40 22h-50m-37-12h-22l-25 15h-55"
+          stroke="#101e31" stroke-width="10"/>
+    <path d="M67 139h67l25-14h74" stroke="#3275aa" stroke-width="4"/>
+    <path d="M253 139h52l27-15h23m37 10h50l38-20h25" stroke="#a36532" stroke-width="4"/>
+    <path d="M505 125h-23l-40 22h-50m-37-12h-22l-25 15h-55" stroke="#2d8679" stroke-width="3"/>
+    <path class="pulse" d="M67 139h67l25-14h74" stroke="#9bdbff" stroke-width="4"/>
+    <path class="pulse thermal" d="M253 139h52l27-15h23M392 134h50l38-20h25" stroke="#ffd29b" stroke-width="4"/>
+    <path class="pulse return" d="M505 125h-23l-40 22h-50m-37-12h-22l-25 15h-55" stroke="#8df4d1" stroke-width="3"/>
+  </g>
+  <g transform="translate(59 49)" stroke="#94c7ee" stroke-width="2" fill="none" stroke-linejoin="round">
+    <path d="m-13 84 13-75 13 75M-9 67 8 50M9 67-8 50m2-16L4 19M6 34-4 19M-23 36h46M-18 22h36"/>
+    <path d="M-22 37v7m45-7v7M-17 23v5m34-5v5"/>
+  </g>
+  <path d="m153 139 24-15h105l-25 15Z" fill="#334f63" stroke="#587a91"/>
+  <use href="#server" x="158" y="60"/>
+  <use href="#server" x="198" y="60"/>
+  <use href="#server" x="238" y="60"/>
+  <g transform="translate(349 74)">
+    <path d="M0 7 11 0h45L45 7Z" fill="#7094a9"/>
+    <path d="M45 7 56 0v43l-11 8Z" fill="#25465d" stroke="#65899e"/>
+    <rect y="7" width="45" height="44" rx="3" fill="#3d657c" stroke="#86a9ba"/>
+    <circle cx="22" cy="29" r="13" fill="#132c41" stroke="#a0bcc8"/>
+    <path d="M22 19v20m-10-10h20m-17-7 14 14m0-14L15 36" stroke="#76acbc" stroke-width="1.3"/>
+    <circle cx="22" cy="29" r="4" fill="#a7e6da"/>
+  </g>
+  <g transform="translate(469 55)">
+    <path d="M0 20h35v40H0z" fill="#597b8d" stroke="#8fa9b8"/>
+    <path d="m35 20 13-7v39l-13 8z" fill="#304b61" stroke="#68869c"/>
+    <path d="M-4 20 16 4l23 16Zm20-16 13-7 23 16-13 7Z" fill="#98aeb9"/>
+    <path d="M7 30h8v9H7Zm14 0h8v9h-8ZM14 46h8v14h-8z" fill="#ffc488"/>
+  </g>
+</svg>

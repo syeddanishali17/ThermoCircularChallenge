@@ -1,5 +1,11 @@
 # Changelog
 
+## Scenario Lab, chart layout and campus artwork
+
+- Preserve the preset label across navigation, show simulation feedback above the assumptions, and open stress presets on coordinated Case D.
+- Move chart legends above the plotting area and reserve dedicated space for axis labels and titles.
+- Add the ThermoCircular vector mark and a pausable campus illustration with reduced-motion support.
+
 ## Frontend refinement
 
 - Reworked typography, page spacing, focus states and the shared navy, slate, teal and blue palette.

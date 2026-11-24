@@ -94,3 +94,16 @@ def test_stress_sensitivity_and_hourly_bundle(app):
     button(app, "Prepare all seven hourly traces (ZIP)").click().run()
     assert not app.exception
     assert len(app.session_state["hourly_bundle"][1]) > 100_000
+
+
+def test_preset_and_animation_state(app):
+    button(app, "Pause campus animation").click().run()
+    assert button(app, "Play campus animation")
+    button(app, "Winter price stress").click().run()
+    assert app.selectbox(key="heat_case").value == "D"
+    app.selectbox(key="section_picker").set_value("Scenario lab").run()
+    assert app.selectbox(key="preset_choice").value == "High winter price"
+    button(app, "Run simulation").click().run()
+    assert any("Simulation complete" in notice.value for notice in app.success)
+    app.selectbox(key="section_picker").set_value("Overview").run()
+    assert button(app, "Play campus animation")

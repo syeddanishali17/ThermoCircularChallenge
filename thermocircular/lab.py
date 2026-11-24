@@ -83,6 +83,9 @@ def field(col, seed, suffix, field_info):
 
 def preset_seed():
     preset = st.session_state["preset_choice"]
+    st.session_state["lab_preset"] = preset
+    if preset == "Custom inputs":
+        return
     st.session_state["lab_seed"] = Settings.model_validate({**DEFAULT.model_dump(), **PRESETS[preset]})
     st.session_state["lab_modules"] = 1
     st.session_state["lab_payload"] = None
@@ -91,8 +94,13 @@ def preset_seed():
 
 def inputs(run):
     c1, c2 = st.columns([3, 1], vertical_alignment="bottom")
-    c1.selectbox(tr("Load assumptions from a preset", "Annahmen einer Vorlage laden"), PRESETS,
-                 key="preset_choice", on_change=preset_seed)
+    current = st.session_state.get("lab_preset", "Base")
+    choices = [*PRESETS, "Custom inputs"] if current == "Custom inputs" else list(PRESETS)
+    st.session_state["preset_choice"] = current
+    c1.selectbox(tr("Load assumptions from a preset", "Annahmen einer Vorlage laden"), choices,
+                 key="preset_choice", on_change=preset_seed,
+                 format_func=option_labels(choices, lambda choice: tr(choice, "Eigene Eingaben")
+                                             if choice == "Custom inputs" else choice))
     c2.button(tr("Reset to baseline"), on_click=reset, width="stretch")
     if st.session_state.get("lab_seed", run.settings) != run.settings or st.session_state.get("lab_payload") != run.payload:
         st.warning(tr("Pending changes. Charts show the last successful run until you simulate.",
@@ -101,7 +109,14 @@ def inputs(run):
                   "Eingaben werden beim Start übernommen. Bei einem Fehler bleibt der letzte Lauf verfügbar."))
     suffix = st.session_state.get("lab_epoch", 0)
     seed = st.session_state.get("lab_seed", run.settings)
+    feedback = st.empty()
+    if st.session_state.pop("lab_run_completed", False):
+        feedback.success(tr(
+            f"Simulation complete. Results are ready in A–D results and Compare runs. Run ID: {run.id}",
+            f"Simulation abgeschlossen. Die Ergebnisse stehen unter Ergebnisse A–D und Läufe vergleichen. Lauf-ID: {run.id}",
+        ))
     with st.form("scenario_form"):
+        submitted = st.form_submit_button(tr("Run simulation"), type="primary", width="stretch")
         area, fixed = st.columns(2)
         sites = ("Vienna", "Linz", "Graz")
         site = area.selectbox(tr("Regional proxy", "Regionalprofil"), sites, index=sites.index(seed.site),
@@ -123,7 +138,6 @@ def inputs(run):
             upload = st.file_uploader(tr("Replace hourly input", "Stundenwerte ersetzen"), type=["csv"], key=f"hourly_{suffix}")
             keep = st.checkbox(tr("Keep attached hourly input when no new file is supplied",
                                   "Vorhandene Stundenwerte ohne neue Datei beibehalten"), value=True, key=f"keep_{suffix}")
-        submitted = st.form_submit_button(tr("Run simulation"), type="primary", width="stretch")
     st.download_button(tr("Download hourly input template", "Vorlage für Stundenwerte"), CANONICAL.read_bytes(),
                        "example_hourly_inputs.csv", "text/csv", on_click="ignore")
     if submitted:
@@ -133,9 +147,10 @@ def inputs(run):
             with st.spinner(tr("Running 8,760 hours across the engineering cases…", "8.760 Stunden werden simuliert…")):
                 result = simulate(settings, payload, modules)
             change_run(result)
+            st.session_state["lab_run_completed"] = True
             st.rerun()
         except (ValueError, AssertionError, RuntimeError) as error:
-            st.error(str(error) or tr("The input failed an audited physical constraint.",
+            feedback.error(str(error) or tr("The input failed an audited physical constraint.",
                                       "Eine physikalische Prüfung der Eingabe ist fehlgeschlagen."))
 
 

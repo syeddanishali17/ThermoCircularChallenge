@@ -8,7 +8,7 @@ from .config import DEFAULT, Settings
 from .engineering import buyer_monthly, installed_comparison
 from .investment import gates
 from .model import comparator, nameplate, simulate
-from .ui import activate_preset, baseline, fmt, navigate, note, option_labels, tr, workspace_bar
+from .ui import activate_preset, baseline, fmt, navigate, note, option_labels, svg_asset, tr, workspace_bar
 
 
 def hero():
@@ -22,11 +22,35 @@ def hero():
                    for label, value in details)
     intro = tr("Model an Austrian AI data centre with independent cooling and staged heat recovery.",
                "Ein österreichisches KI-Rechenzentrum mit unabhängiger Kühlung und gestufter Wärmenutzung modellieren.")
+    paused = st.session_state.get("campus_motion_paused", False)
+    source = svg_asset("campus-flow.svg", paused)
+    mark = svg_asset("thermocircular-mark.svg")
+    alt = tr("Conceptual data centre with server racks, a heat pump, and pipes serving external buildings.",
+             "Schematisches Rechenzentrum mit Serverracks, Wärmepumpe und Leitungen zu externen Gebäuden.")
     st.html(f"""<section class="tc-hero">
-        <div><div class="tc-kicker">INFINEON INNOSCOPE 2026 / TU WIEN</div>
-        <h1>ThermoCircular<br><span>AI Campus</span></h1><p>{escape(intro)}</p></div>
+        <div>
+          <div class="tc-hero-brand"><img src="{mark}" alt=""><div class="tc-kicker">INFINEON INNOSCOPE 2026 / TU WIEN</div></div>
+          <h1>ThermoCircular<br><span>AI Campus</span></h1><p>{escape(intro)}</p>
+        </div>
+        <figure class="tc-campus">
+          <img src="{source}" alt="{escape(alt)}">
+          <figcaption>
+            <span class="tc-electric-flow">{escape(tr("Grid power", "Netzstrom"))}</span>
+            <span class="tc-heat-flow">{escape(tr("Recovered heat", "Abwärme"))}</span>
+            <span class="tc-return-flow">{escape(tr("Cooling return", "Kühlrücklauf"))}</span>
+          </figcaption>
+        </figure>
         <div class="tc-brief"><p>{escape(tr("Reference design", "Referenzentwurf"))}</p><dl>{rows}</dl></div>
     </section>""")
+    with st.container(key="campus_animation_control"):
+        st.button(tr("Play campus animation", "Campus-Animation abspielen") if paused
+                  else tr("Pause campus animation", "Campus-Animation pausieren"),
+                  key="campus_motion", on_click=toggle_campus_motion,
+                  help=tr("Illustrative flows in the proposed campus.", "Schematische Flüsse für den geplanten Campus."))
+
+
+def toggle_campus_motion():
+    st.session_state["campus_motion_paused"] = not st.session_state.get("campus_motion_paused", False)
 
 
 def kpis(run):

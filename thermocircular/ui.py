@@ -1,4 +1,6 @@
 """Shared Streamlit labels, charts, navigation and run state."""
+from base64 import b64encode
+from functools import lru_cache
 from html import escape
 import os
 
@@ -82,6 +84,14 @@ def option_labels(options, translate):
     return labels.__getitem__
 
 
+@lru_cache(maxsize=3)
+def svg_asset(filename, paused=False):
+    svg = (ROOT / "assets" / filename).read_text(encoding="utf-8")
+    if paused:
+        svg = svg.replace("</style>", ".pulse { animation-play-state: paused; }\n</style>")
+    return "data:image/svg+xml;base64," + b64encode(svg.encode()).decode("ascii")
+
+
 def case_label(key):
     return tr(CASE_NAMES[key], CASE_DE[list(CASE_NAMES).index(key)])
 
@@ -126,16 +136,21 @@ def change_run(run, name=None, seed=True):
         st.session_state["lab_payload"] = run.payload
         st.session_state["lab_modules"] = run.fixed_modules
         st.session_state["lab_epoch"] = st.session_state.get("lab_epoch", 0) + 1
+        preset = "Custom inputs"
+        if run.payload is None and run.fixed_modules == 1:
+            preset = next((key for key, edits in PRESETS.items()
+                           if run.settings.model_dump() == {**DEFAULT.model_dump(), **edits}), preset)
+        st.session_state["lab_preset"] = preset
 
 
 def reset():
     change_run(baseline())
-    st.session_state["preset_choice"] = "Base"
 
 
 def activate_preset(key, destination="Scenario lab"):
     change_run(simulate(Settings.model_validate({**DEFAULT.model_dump(), **PRESETS[key]})), key)
-    st.session_state["preset_choice"] = key
+    if destination == "Heat dispatch":
+        st.session_state["heat_case"] = "D"
     st.session_state["nav"] = destination
 
 
@@ -183,35 +198,49 @@ def note(title, detail):
 
 
 def chart(fig, y=None, x=None, height=350):
-    if y:
-        fig.update_yaxes(title_text=y, gridcolor="#e1e9f2", zerolinecolor="#b9c8d7", automargin=True)
-    if x:
-        fig.update_xaxes(title_text=x, gridcolor="#edf2f4", automargin=True)
-    fig.update_layout(height=height, paper_bgcolor="#ffffff", plot_bgcolor="#ffffff", separators=tr(".,", ",."),
+    show_legend = len([trace for trace in fig.data if trace.showlegend is not False
+                       and trace.type != "heatmap"]) > 1
+    fig.update_yaxes(automargin=True, title_standoff=13, gridcolor="#e1e9f2", zerolinecolor="#b9c8d7")
+    fig.update_xaxes(automargin=True, title_standoff=16, gridcolor="#edf2f4", nticks=4)
+    if y is not None:
+        fig.update_yaxes(title_text=y)
+    if x is not None:
+        fig.update_xaxes(title_text=x)
+    fig.update_layout(height=height + (42 if show_legend else 12), paper_bgcolor="#ffffff",
+                      plot_bgcolor="#ffffff", separators=tr(".,", ",."),
                       font=dict(family="Arial, sans-serif", size=14, color=INK), colorway=COLORS,
-                      margin=dict(l=58, r=22, t=22, b=24, autoexpand=True),
-                      hoverlabel=dict(font_size=14),
-                      legend=dict(orientation="h", yref="container", yanchor="bottom", y=0.02, x=0.03,
-                                  font=dict(size=13)))
+                      margin=dict(l=56, r=24, t=58 if show_legend else 32, b=62 if x else 48, autoexpand=True),
+                      hoverlabel=dict(font_size=14, namelength=-1), showlegend=show_legend,
+                      legend=dict(orientation="h", yref="paper", yanchor="bottom", y=1.045,
+                                  xref="paper", xanchor="left", x=0, font=dict(size=13)))
     st.plotly_chart(fig, theme=None, width="stretch", config={"displaylogo": False, "scrollZoom": False})
 
 
 def lines(frame, names, unit, height=350):
     fig = go.Figure()
+    time_format = "%{x}"
+    if isinstance(frame.index, pd.DatetimeIndex):
+        days = (frame.index[-1] - frame.index[0]) / pd.Timedelta(days=1)
+        fig.update_xaxes(tickformat="%b" if days >= 90 else "%d %b" if days >= 4 else "%H:%M")
+        time_format = "%{x|%d %b %Y, %H:%M}"
     for index, (key, label) in enumerate(names.items()):
         fig.add_scatter(x=frame.index, y=frame[key], name=label, mode="lines",
                         line=dict(color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]), width=1.8,
                                   dash="dash" if key in ("grid_limit_MW", "required_heat_MWth") else "solid"),
-                        hovertemplate="%{y:,.2f} " + unit + "<br>%{x}")
+                        hovertemplate="%{y:,.2f} " + unit + "<br>" + time_format)
     chart(fig, unit, height=height)
 
 
 def bars(frame, names, unit, stack=False, height=350):
     fig = go.Figure()
+    months = frame.index.name == "month_fixed_CET"
+    values = pd.to_datetime(frame.index) if months else frame.index
+    if months:
+        fig.update_xaxes(type="date", tickformat="%b")
     for index, (key, label) in enumerate(names.items()):
-        fig.add_bar(x=frame.index, y=frame[key], name=label,
+        fig.add_bar(x=values, y=frame[key], name=label,
                     marker_color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]),
-                    hovertemplate="%{y:,.2f} " + unit + "<br>%{x}")
+                    hovertemplate="%{y:,.2f} " + unit + ("<br>%{x|%b %Y}" if months else "<br>%{x}"))
     fig.update_layout(barmode="stack" if stack else "group")
     chart(fig, unit, height=height)
 
@@ -228,7 +257,7 @@ def table(frame, *, hide_index=True, labels=None):
 
 def sidebar():
     with st.sidebar:
-        st.html('<div class="tc-brand"><span class="tc-mark" aria-hidden="true">◈</span>'
+        st.html(f'<div class="tc-brand"><img class="tc-mark" src="{svg_asset("thermocircular-mark.svg")}" alt="">'
                 '<div><strong>ThermoCircular</strong><small>AI Campus</small></div></div>')
         st.radio(tr("Navigation", "Navigation"), list(PAGES), key="nav",
                  format_func=option_labels(PAGES, tr), label_visibility="collapsed")
