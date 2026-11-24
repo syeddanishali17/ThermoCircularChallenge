@@ -142,6 +142,47 @@ body:has(.tc-context[lang="de"]) [data-testid="stSidebarCollapseButton"] button:
 .st-key-campus_animation_control button { border-color: var(--line); }
 @media (prefers-reduced-motion: reduce) { .st-key-campus_animation_control { display: none; } }
 
+.st-key-project_story [data-testid="stMarkdownContainer"] { max-width: 78ch; }
+.st-key-project_story [data-testid="stHeading"]:not(:first-child) { margin-top: .35rem; }
+.tc-project-flow {
+  --flow-gap: 1.5rem;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem var(--flow-gap); margin: 0;
+}
+.tc-project-flow ol {
+  grid-column: 1 / -1; display: grid; grid-template-columns: inherit;
+  gap: var(--flow-gap); list-style: none; padding: 0; margin: 0;
+}
+.tc-project-flow li, .tc-project-flow figcaption {
+  position: relative; padding: .85rem 1rem; border: 1px solid var(--line);
+  border-radius: .72rem; color: var(--ink); background: var(--surface);
+}
+.tc-project-flow li { border-top: .22rem solid var(--teal); }
+.tc-project-flow li:first-child { border-top-color: var(--focus); }
+.tc-project-flow li:not(:last-child)::after {
+  content: ""; position: absolute; top: 50%; left: calc(100% + .4rem);
+  width: .47rem; height: .47rem; border: solid var(--muted);
+  border-width: 2px 2px 0 0; transform: translateY(-50%) rotate(45deg);
+}
+.tc-project-flow strong { display: block; font-size: 1rem; line-height: 1.28; }
+.tc-project-flow p { color: var(--muted); line-height: 1.52; margin: .38rem 0 0; font-size: .95rem; }
+.tc-project-flow figcaption {
+  grid-column: 2 / -1; background: #eef4f8; border-left: .22rem solid var(--muted);
+}
+.tc-project-flow figcaption::before {
+  content: ""; position: absolute; left: 1.1rem; bottom: 100%;
+  height: calc(1rem + 1px); border-left: 2px dashed var(--muted);
+}
+@container (max-width: 760px) {
+  .tc-project-flow { --flow-gap: 1.35rem; grid-template-columns: minmax(0, 1fr); }
+  .tc-project-flow figcaption { grid-column: 1; }
+  .tc-project-flow li:not(:last-child)::after {
+    top: calc(100% + .35rem); left: 1rem;
+    transform: rotate(135deg);
+  }
+  .tc-project-flow figcaption::before { content: none; }
+}
+
 .tc-kpi-grid {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0; padding: 0;
 }

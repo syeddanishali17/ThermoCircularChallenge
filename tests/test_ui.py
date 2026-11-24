@@ -59,6 +59,20 @@ def test_custom_run_compare_save_reopen_reset(app):
     assert not app.session_state["scenario_store"].list()
 
 
+def test_project_story_keeps_baseline_after_scenario_change(app):
+    button(app, "Winter price stress").click().run()
+    assert app.session_state["custom_run"] is not None
+    app.selectbox(key="section_picker").set_value("Overview").run()
+    assert "The challenge" in [item.value for item in app.subheader]
+    summary = next(item.value for item in app.markdown if "audited baseline" in item.value)
+    assert all(number in summary for number in ("27.63", "+0.36", "10.18", "2.01"))
+
+    app.selectbox(key="language").set_value("Deutsch").run()
+    assert "Die Herausforderung" in [item.value for item in app.subheader]
+    summary = next(item.value for item in app.markdown if "geprüften Referenz" in item.value)
+    assert all(number in summary for number in ("27,63", "+0,36", "10,18", "2,01"))
+
+
 def test_custom_failure_preserves_baseline(app):
     app.radio(key="nav").set_value("Scenario lab").run()
     app.number_input(key="cop_0").set_value(1.)

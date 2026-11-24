@@ -20,8 +20,10 @@ def hero():
     )
     rows = "".join(f'<div><dt>{escape(label)}</dt><dd>{escape(value)}</dd></div>'
                    for label, value in details)
-    intro = tr("Model an Austrian AI data centre with independent cooling and staged heat recovery.",
-               "Ein österreichisches KI-Rechenzentrum mit unabhängiger Kühlung und gestufter Wärmenutzung modellieren.")
+    intro = tr(
+        "A proposed AI data centre in Austria that supplies useful heat to a nearby customer while keeping server cooling independent.",
+        "Ein geplantes KI-Rechenzentrum in Österreich, das einen Abnehmer in der Nähe mit Wärme versorgt und seine Server unabhängig kühlt.",
+    )
     paused = st.session_state.get("campus_motion_paused", False)
     source = svg_asset("campus-flow.svg", paused)
     mark = svg_asset("thermocircular-mark.svg")
@@ -51,6 +53,75 @@ def hero():
 
 def toggle_campus_motion():
     st.session_state["campus_motion_paused"] = not st.session_state.get("campus_motion_paused", False)
+
+
+def project_story():
+    with st.container(key="project_story"):
+        st.subheader(tr("The challenge", "Die Herausforderung"))
+        st.markdown(tr(
+            "AI servers need substantial electricity and continuous cooling. That cooling carries heat away from the servers. "
+            "A nearby customer can put some of that heat to use, but only when it needs heat and the temperature is high enough.",
+            "KI-Server brauchen viel Strom und müssen ständig gekühlt werden. Die Kühlung führt Wärme von den Servern ab. "
+            "Ein Abnehmer in der Nähe kann einen Teil dieser Wärme nutzen, wenn er gerade Wärme braucht und die Temperatur ausreicht.",
+        ))
+        st.subheader(tr("How the proposed campus works", "So funktioniert der geplante Campus"))
+        steps = (
+            (tr("Power AI servers", "KI-Server mit Strom versorgen"),
+             tr("The grid and on-site solar supply the computing equipment and campus systems.",
+                "Das Stromnetz und die Photovoltaik vor Ort versorgen die Rechner und die Gebäudetechnik.")),
+            (tr("Collect server heat", "Serverabwärme aufnehmen"),
+             tr("Liquid cooling draws heat directly from the chips into a cooling loop.",
+                "Eine Flüssigkeitskühlung nimmt die Abwärme direkt an den Chips auf.")),
+            (tr("Raise the temperature", "Temperatur anheben"),
+             tr("An electric heat pump raises the water temperature to the level the customer needs.",
+                "Eine elektrische Wärmepumpe hebt die Wassertemperatur auf das vom Abnehmer benötigte Niveau.")),
+            (tr("Deliver useful heat", "Nutzbare Wärme liefern"),
+             tr("An insulated pipe carries hot water to the customer. A meter records the heat actually delivered.",
+                "Eine gedämmte Leitung bringt das Warmwasser zum Abnehmer. Ein Zähler erfasst die tatsächlich gelieferte Wärme.")),
+        )
+        cards = "".join(
+            f'<li><strong>{escape(title)}</strong><p>{escape(body)}</p></li>' for title, body in steps
+        )
+        fallback_title = tr("Cooling continues when heat delivery stops", "Die Kühlung läuft auch ohne Wärmelieferung weiter")
+        fallback = tr(
+            "Before exporting heat, the campus checks customer demand and available electrical capacity. "
+            "Independent dry coolers remove the remaining heat. "
+            "The customer keeps a separate backup heat source for times when the campus supplies too little.",
+            "Vor der Wärmelieferung prüft der Campus den Bedarf des Abnehmers und die verfügbare elektrische Leistung. "
+            "Unabhängige Trockenkühler führen die restliche Wärme ab. "
+            "Der Abnehmer behält eine eigene Ersatzwärmequelle für Zeiten, in denen der Campus zu wenig liefert.",
+        )
+        st.html(f"""<figure class="tc-project-flow">
+            <ol role="list">{cards}</ol>
+            <figcaption><strong>{escape(fallback_title)}</strong><p>{escape(fallback)}</p></figcaption>
+        </figure>""")
+
+        st.subheader(tr("Why start with one heat pump?", "Warum mit einer Wärmepumpe starten?"))
+        official = baseline()
+        zero, one, two = official.investments[:3]
+        delivered = fmt(one["delivered_heat_GWhth"])
+        first_npv = fmt(one["heat_15y_NPV_MEUR"] - zero["heat_15y_NPV_MEUR"], signed=True)
+        extra = fmt(two["delivered_heat_GWhth"] - one["delivered_heat_GWhth"])
+        npv_loss = fmt(one["heat_15y_NPV_MEUR"] - two["heat_15y_NPV_MEUR"])
+        st.markdown(tr(
+            f"In the **audited baseline**, one 5 MW thermal module delivers **{delivered} GWh of heat per year**. "
+            f"The heat project has a 15-year net present value of **{first_npv} million euro**. A second module adds "
+            f"**{extra} GWh of heat per year** and reduces that value by **{npv_loss} million euro**. "
+            "The proposal therefore starts with one module and revisits expansion once metered demand, available grid capacity and costs support it.",
+            f"In der **geprüften Referenz** liefert ein Modul mit 5 MW Wärmeleistung **{delivered} GWh Wärme pro Jahr** "
+            f"bei einem Kapitalwert von **{first_npv} Millionen Euro** über 15 Jahre. Ein zweites Modul liefert "
+            f"zusätzlich **{extra} GWh Wärme pro Jahr** und senkt den Kapitalwert um **{npv_loss} Millionen Euro**. "
+            "Der Vorschlag beginnt daher mit einem Modul. Über den Ausbau wird anhand gemessener Nachfrage, verfügbarer Netzkapazität und Kosten entschieden.",
+        ))
+        with st.expander(tr("Renewable power, hardware and site choice", "Erneuerbarer Strom, Hardware und Standortwahl")):
+            st.markdown(tr(
+                "- **Renewable power.** Use on-site solar and check how much of the remaining electricity demand can be matched with contracted renewable generation each hour.\n"
+                "- **Hardware.** Repair and redeploy suitable equipment before sending end-of-life hardware for certified recovery.\n"
+                "- **Site choice.** Screen industrial locations for a viable grid connection, space for the campus and a practical pipe route to a reliable heat customer.",
+                "- **Erneuerbarer Strom.** Photovoltaik vor Ort nutzen und stündlich prüfen, wie viel des verbleibenden Strombedarfs sich durch vertraglich gesicherte erneuerbare Erzeugung decken lässt.\n"
+                "- **Hardware.** Geeignete Geräte reparieren und weiternutzen. Ausgediente Hardware geht in die zertifizierte Verwertung.\n"
+                "- **Standortwahl.** Industriestandorte auf Netzanschluss, Flächen für den Campus und eine umsetzbare Leitungstrasse zu einem verlässlichen Wärmeabnehmer prüfen.",
+            ))
 
 
 def kpis(run):
@@ -176,6 +247,8 @@ def campus_schematic():
 
 def page(run):
     hero()
+    project_story()
+    st.subheader(tr("Explore the model", "Das Modell erkunden"))
     with st.container(key="overview_actions"):
         left, right, third = st.columns(3)
         left.button(tr("Open scenario lab", "Szenarien öffnen"), type="primary", on_click=navigate, args=("Scenario lab",), width="stretch")
