@@ -6,7 +6,7 @@ from thermocircular.model import ROOT, feasible
 from thermocircular.ui import active, reset, sidebar, tr, workspace_bar
 
 st.set_page_config(
-    page_title="ThermoCircular · AI Campus",
+    page_title="ThermoCircular AI Campus | Data Centre Heat Recovery",
     page_icon=(ROOT / "assets/thermocircular-mark.svg").read_text(encoding="utf-8"),
     layout="wide",
     initial_sidebar_state="collapsed",
