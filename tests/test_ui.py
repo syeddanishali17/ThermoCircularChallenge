@@ -20,8 +20,10 @@ def app(monkeypatch):
 def test_all_pages(app, language):
     app.selectbox(key="language").set_value(language).run()
     for page in PAGES:
-        app.radio(key="nav").set_value(page).run()
+        navigation = app.selectbox(key="section_picker") if language == "English" else app.radio(key="nav")
+        navigation.set_value(page).run()
         assert not app.exception, (page, [item.message for item in app.exception])
+        assert app.radio(key="nav").value == app.selectbox(key="section_picker").value == page
 
 
 def test_custom_run_compare_save_reopen_reset(app):
@@ -47,6 +49,14 @@ def test_custom_run_compare_save_reopen_reset(app):
     app.radio(key="nav").set_value("Evidence & exports").run()
     assert not app.exception
     assert len(app.get("download_button")) >= 8
+    app.selectbox(key="section_picker").set_value("Scenario lab").run()
+    button(app, "Delete").click().run()
+    assert app.error
+    assert app.session_state["scenario_store"].list()
+    next(item for item in app.checkbox if item.label.startswith("Confirm deletion")).check()
+    button(app, "Delete").click().run()
+    assert not app.exception
+    assert not app.session_state["scenario_store"].list()
 
 
 def test_custom_failure_preserves_baseline(app):

@@ -19,6 +19,8 @@ The first dependency installation needs access to your package index. After inst
 
 ## Jury walkthrough
 
+The sidebar starts collapsed. Use **Jump to section** on any screen to move around, or open **Menu** for the full navigation list and language setting.
+
 1. Open **Overview** for the reference design and annual metrics. Select a system block to follow the electrical or thermal flow.
 2. Open **Investment**. The first 5 MWth module adds 27.63 GWhth/year and €0.365m heat-project NPV. A second adds 10.18 GWhth/year and reduces incremental NPV by €2.010m.
 3. Run **Winter price stress**. Open **Heat dispatch → Installed comparison** for the operator gain, extra buyer backup and joint emissions increase on the same equipment. Case D defers new investment in this stress.
@@ -44,6 +46,8 @@ After team consent and source publication review, publish this application direc
 In [Streamlit Community Cloud](https://share.streamlit.io), create an app and pick the GitHub repository **syeddanishali17/ThermoCircularChallenge**, branch **main**, entry point **app.py**, and **Python 3.12**. Set the optional subdomain if available. Verify Overview, the winter-price demo, export and a second independent session at the public URL. Leave TC_LOCAL_STORAGE unset in a public deployment.
 
 For rollback, use the last verified commit on a dedicated deployment branch or revert the offending commit and redeploy. For a local recovery, keep the SQLite backup and run a clean checkout of the last verified version. To launch the reference without opening stored records, start normally and select Overview or Jury mode.
+
+The frontend styles live in assets/style.css and .streamlit/config.toml. Shared navigation, metric and chart styling is in thermocircular/ui.py. For rollback of the frontend refinement, revert its commit on main and allow Streamlit to redeploy app.py at the existing address. The verified pre-refinement tree is Git commit a3bb37f.
 
 ### Troubleshooting
 

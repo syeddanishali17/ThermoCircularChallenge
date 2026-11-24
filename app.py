@@ -3,13 +3,13 @@ import streamlit as st
 
 from thermocircular import engineering, evidence_page, investment, lab, overview, review
 from thermocircular.model import ROOT, feasible
-from thermocircular.ui import active, reset, sidebar, top_context, tr
+from thermocircular.ui import active, reset, sidebar, tr, workspace_bar
 
 st.set_page_config(
     page_title="ThermoCircular · AI Campus",
     page_icon="♨️",
     layout="wide",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="collapsed",
 )
 
 VIEWS = {
@@ -33,7 +33,7 @@ run = active()
 if view == "Jury mode":
     overview.jury()
 else:
-    top_context(run)
+    workspace_bar(run)
     if not run.official:
         with st.sidebar:
             st.button(tr("Reset to baseline"), key="sidebar_reset", on_click=reset, width="stretch")

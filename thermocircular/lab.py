@@ -181,7 +181,8 @@ def saved(run):
         a, b, c = st.columns(3)
         rename = a.form_submit_button(tr("Rename", "Umbenennen"))
         duplicate = b.form_submit_button(tr("Duplicate", "Duplizieren"))
-        delete = c.form_submit_button(tr("Delete", "Löschen"))
+        with c.container(key="delete_saved_scenario"):
+            delete = st.form_submit_button(tr("Delete", "Löschen"))
     if rename or duplicate or delete:
         try:
             if rename:

@@ -1,5 +1,6 @@
 """Sustainability, evidence-backed site screening and validation records."""
 from datetime import date
+from html import escape
 from urllib.parse import urlsplit
 
 import pandas as pd
@@ -8,7 +9,7 @@ import streamlit as st
 
 from .assessment import BENCH_LOADS, SITE_CRITERIA, SITE_GATES, SITE_WEIGHTS, bench_screen, component, power_input, rank_site
 from .model import ROOT, comparator
-from .ui import BLUE, TEAL, fmt, heading, metrics, note, option_labels, store, table, tr, chart
+from .ui import BLUE, TEAL, fmt, heading, lines, metrics, note, option_labels, store, table, tr, chart
 
 EVIDENCE = ROOT / "data/evidence"
 BUYERS = ("Gas boiler", "Resistance heat", "Electric heat pump (COP 3)")
@@ -316,6 +317,15 @@ def roadmap_summary():
                   "Netz- und Abnahmebedingungen gehen der thermischen und elektrischen Qualifizierung voraus. Pilotmessung und Jahresdaten stützen den Ausbau."))
 
 
+def jury_gates():
+    cards = "".join(
+        f'<article class="tc-gate"><h3><span>{escape(gate)}</span> {escape(title)}</h3>'
+        f'<small>{escape(owner)}</small><p>{escape(evidence)}</p></article>'
+        for gate, title, owner, evidence in ROADMAP
+    )
+    st.html(f'<div class="tc-gates">{cards}</div>')
+
+
 def roadmap():
     roadmap_summary()
     db = store()
@@ -366,7 +376,8 @@ def replay(run):
         "Delivered before MWhth": trace.delivered_MWth.sum(), "Delivered in replay MWhth": trace["Replay delivered MWth"].sum(),
         "Buyer backup in replay MWhth": trace["Replay backup MWth"].sum(), "Required MWhth": trace.required_heat_MWth.sum(),
     }]))
-    st.line_chart(trace[["Replay delivered MWth", "Replay backup MWth"]], width="stretch")
+    lines(trace, {"Replay delivered MWth": tr("Delivered in replay", "Geliefert im Test"),
+                  "Replay backup MWth": tr("Backup in replay", "Ersatzwärme im Test")}, "MWth")
     with st.expander(tr("Pilot safety evidence checklist", "Nachweisliste Pilot-Sicherheit")):
         st.markdown(tr("- Independent rejection and protected computing during buyer loss\n- Meter freshness and safe fallback\n"
                        "- Instrumented acceptance and thermal limits\n- Documented incident response and protected restart",
