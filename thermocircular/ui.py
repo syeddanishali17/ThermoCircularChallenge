@@ -3,6 +3,7 @@ from base64 import b64encode
 from functools import lru_cache
 from html import escape
 import os
+import re
 
 import pandas as pd
 import plotly.graph_objects as go
@@ -12,12 +13,14 @@ from .config import DEFAULT, PRESETS, Settings
 from .model import ROOT, simulate
 from .storage import Store
 
-INK = "#13283b"
-TEAL = "#0c6b60"
-BLUE = "#3263a2"
+INK = "#152b3d"
+TEAL = "#08756a"
+BLUE = "#2e62a1"
 SOFT = "#3b8193"
-ORANGE = "#ad5a19"
+ORANGE = "#9c4b18"
 GRAY = "#667b92"
+CHART_FONT = '"Source Sans", "Source Sans 3", "Segoe UI", Arial, sans-serif'
+THERMAL_UNIT = re.compile(r"\b(kW|MW|kWh|MWh|GWh)th\b")
 COLORS = (TEAL, BLUE, ORANGE, SOFT, "#735497", "#596577", GRAY)
 SERIES_COLORS = {
     "grid_MW": BLUE,
@@ -101,10 +104,15 @@ def fmt(value, digits=2, signed=False):
         return "N/A"
     if abs(value) < .5 * 10 ** -digits:
         value = 0
-    result = f"{value:+,.{digits}f}" if signed else f"{value:,.{digits}f}"
+    result = (f"{value:+,.{digits}f}" if signed else f"{value:,.{digits}f}").replace("-", "−")
     if st.session_state.get("language") == "Deutsch":
         result = result.translate(str.maketrans({",": ".", ".": ","}))
     return result
+
+
+def engineering_markup(text):
+    """Render thermal-unit suffixes in HTML and Plotly labels."""
+    return THERMAL_UNIT.sub(r"\1<sub>th</sub>", escape(text).replace("CO2", "CO₂"))
 
 
 def metrics(items):
@@ -159,17 +167,10 @@ def navigate(destination):
 
 
 def top_context(run, historical=False):
-    if historical:
-        label = tr("Historical research")
-        detail = tr("Earlier D9 · legacy perimeter", "Frühere D9-Studie · abweichende Bilanzgrenze")
-    else:
-        label = tr("Official baseline" if run.official else "Custom scenario")
-        profile = tr("Proxy profiles" if run.payload is None else "Unverified hourly data")
-        detail = f"{run.id} · {profile} · {tr('2025 fixed CET', '2025 feste MEZ')}"
+    label = tr("Historical research" if historical else "Official baseline" if run.official else "Custom scenario")
     mode = "" if run.official and not historical else " custom"
     language = tr("en", "de")
-    st.html(f'<div class="tc-context" lang="{language}"><span class="tc-mode{mode}">{escape(label)}</span>'
-            f'<span class="tc-run">{escape(detail)}</span></div>')
+    st.html(f'<div class="tc-context" lang="{language}"><span class="tc-mode{mode}">{escape(label)}</span></div>')
 
 
 def jump_to_section():
@@ -179,12 +180,12 @@ def jump_to_section():
 def workspace_bar(run):
     st.session_state["section_picker"] = st.session_state["nav"]
     with st.container(key="workspace_bar", vertical_alignment="center"):
-        status, picker = st.columns([1.65, 1], vertical_alignment="bottom")
+        status, picker = st.columns([1.65, 1], vertical_alignment="center")
         with status:
             top_context(run)
         picker.selectbox(tr("Jump to section", "Zum Abschnitt"), list(PAGES),
                          key="section_picker", on_change=jump_to_section,
-                         format_func=option_labels(PAGES, tr))
+                         format_func=option_labels(PAGES, tr), label_visibility="collapsed")
 
 
 def heading(en, de, detail, detail_de):
@@ -203,16 +204,21 @@ def chart(fig, y=None, x=None, height=350):
     fig.update_yaxes(automargin=True, title_standoff=13, gridcolor="#e1e9f2", zerolinecolor="#b9c8d7")
     fig.update_xaxes(automargin=True, title_standoff=16, gridcolor="#edf2f4", nticks=4)
     if y is not None:
-        fig.update_yaxes(title_text=y)
+        y_label = engineering_markup(y)
+        fig.update_yaxes(title_text=y_label)
+        for trace in fig.data:
+            if trace.type in ("bar", "scatter", "waterfall") and not trace.hovertemplate and trace.hoverinfo != "skip":
+                name = escape(trace.name) if trace.name else ""
+                trace.hovertemplate = f"%{{y:,.2f}} · {y_label}<br>%{{x}}<extra>{name}</extra>"
     if x is not None:
-        fig.update_xaxes(title_text=x)
+        fig.update_xaxes(title_text=engineering_markup(x))
     fig.update_layout(height=height + (42 if show_legend else 12), paper_bgcolor="#ffffff",
                       plot_bgcolor="#ffffff", separators=tr(".,", ",."),
-                      font=dict(family="Arial, sans-serif", size=14, color=INK), colorway=COLORS,
+                      font=dict(family=CHART_FONT, size=15, color=INK), colorway=COLORS,
                       margin=dict(l=56, r=24, t=58 if show_legend else 32, b=62 if x else 48, autoexpand=True),
                       hoverlabel=dict(font_size=14, namelength=-1), showlegend=show_legend,
                       legend=dict(orientation="h", yref="paper", yanchor="bottom", y=1.045,
-                                  xref="paper", xanchor="left", x=0, font=dict(size=13)))
+                                  xref="paper", xanchor="left", x=0, font=dict(size=14)))
     st.plotly_chart(fig, theme=None, width="stretch", config={"displaylogo": False, "scrollZoom": False})
 
 
@@ -227,7 +233,7 @@ def lines(frame, names, unit, height=350):
         fig.add_scatter(x=frame.index, y=frame[key], name=label, mode="lines",
                         line=dict(color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]), width=1.8,
                                   dash="dash" if key in ("grid_limit_MW", "required_heat_MWth") else "solid"),
-                        hovertemplate="%{y:,.2f} " + unit + "<br>" + time_format)
+                        hovertemplate="%{y:,.2f} " + engineering_markup(unit) + "<br>" + time_format)
     chart(fig, unit, height=height)
 
 
@@ -240,7 +246,7 @@ def bars(frame, names, unit, stack=False, height=350):
     for index, (key, label) in enumerate(names.items()):
         fig.add_bar(x=values, y=frame[key], name=label,
                     marker_color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]),
-                    hovertemplate="%{y:,.2f} " + unit + ("<br>%{x|%b %Y}" if months else "<br>%{x}"))
+                    hovertemplate="%{y:,.2f} " + engineering_markup(unit) + ("<br>%{x|%b %Y}" if months else "<br>%{x}"))
     fig.update_layout(barmode="stack" if stack else "group")
     chart(fig, unit, height=height)
 
@@ -249,7 +255,7 @@ def table(frame, *, hide_index=True, labels=None):
     if labels:
         frame = frame.rename(columns=labels)
     column_config = {
-        name: st.column_config.NumberColumn(format="localized")
+        name: st.column_config.NumberColumn(label=str(name).replace("CO2", "CO₂"), format="localized")
         for name in frame.select_dtypes(include="number").columns if name not in ("Year", "Modules")
     }
     st.dataframe(frame, hide_index=hide_index, width="stretch", column_config=column_config)

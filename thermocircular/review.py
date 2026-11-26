@@ -53,8 +53,8 @@ def safe_link(url):
 def impact_results(run):
     buyer = st.selectbox(tr("Buyer heating comparator", "Wärmevergleich des Abnehmers"),
                          BUYERS, format_func=option_labels(BUYERS, lambda b: tr(b, BUYERS_DE[BUYERS.index(b)])),
-                         help=tr("Post-processes the buyer's residual heat at identical IT activity and heat demand.",
-                                 "Bilanziert die Restwärme bei gleicher IT-Aktivität und gleichem Wärmebedarf."))
+                         help=tr("Choose how the customer covers heat it does not receive from the campus. The comparison holds computing activity and heat demand constant.",
+                                 "Wähle, wie der Abnehmer den vom Campus ungedeckten Wärmebedarf deckt. IT-Aktivität und Wärmebedarf bleiben im Vergleich gleich."))
     fuel_factor = .202 / .90
     rows = [dict(case=k, **comparator(run.traces[k], buyer, fuel_factor)) for k in "ABCD"]
     b, d = rows[1], rows[3]

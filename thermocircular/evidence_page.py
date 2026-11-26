@@ -56,10 +56,11 @@ def methodology():
         "Die Kondensatorleistung wird durch Modulgröße, Abnahme geteilt durch 0,95, IT-Quellwärme und Netzreserve begrenzt. "
         "Koordinierter Betrieb prüft zusätzlich Deckungsbeitrag und Emissionsschwelle. Fester Betrieb nutzt dieselben physikalischen Grenzen.",
     ))
-    st.latex(r"\mathrm{COP}_{auto} = \operatorname{clip}(4.1+0.035(T_{ambient}-10),3,5)")
-    st.latex(r"Q_{buyer}=0.95 Q_{condenser},\quad P_{plant}=Q_{condenser}(1/\mathrm{COP}+0.01)")
-    st.latex(r"P_{grid}=\max(0,P_{facility}+P_{plant}-P_{PV})")
-    st.latex(r"\mathrm{NPV} = \mathrm{margin}_{annual}\frac{1-1.06^{-15}}{0.06}-\mathrm{CAPEX}")
+    st.latex(r"\mathrm{COP}_{\mathrm{auto}} = \operatorname{clip}(4.1+0.035(T_{\mathrm{ambient}}-10),3,5)")
+    st.latex(r"Q_{\mathrm{buyer}}=0.95\,Q_{\mathrm{condenser}}")
+    st.latex(r"P_{\mathrm{plant}}=Q_{\mathrm{condenser}}(1/\mathrm{COP}+0.01)")
+    st.latex(r"P_{\mathrm{grid}}=\max(0,P_{\mathrm{facility}}+P_{\mathrm{plant}}-P_{\mathrm{PV}})")
+    st.latex(r"\mathrm{NPV} = \mathrm{margin}_{\mathrm{annual}}\frac{1-1.06^{-15}}{0.06}-\mathrm{CAPEX}")
     table(pd.DataFrame([
         ("Modelled IT utilisation", "60% average at reference shape", "Scenario assumption"),
         ("Facility PUE", "1.21 conventional / 1.16 efficient before hot-temperature penalty", "Scenario assumption"),
@@ -127,7 +128,21 @@ def downloads(run):
     if bundle and bundle[0] == run.id:
         st.download_button(tr("Download hourly trace bundle", "ZIP mit Stundenwerten herunterladen"), bundle[1],
                            f"{run.id}_hourly_traces.zip", "application/zip", on_click="ignore")
-    with st.expander(tr("Run manifest and limits", "Laufverzeichnis und Grenzen")):
+    with st.expander(tr("Run details and model limits", "Laufdetails und Modellgrenzen")):
+        st.markdown(tr(
+            "**Time basis.** The model uses all 8,760 hours of 2025 in Central European Time (UTC+1), without a daylight-saving shift.",
+            "**Zeitbasis.** Das Modell umfasst alle 8.760 Stunden des Jahres 2025 in mitteleuropäischer Zeit (UTC+1), ohne Sommerzeitumstellung.",
+        ))
+        st.markdown(tr(
+            "**Input data.** This run uses uploaded hourly data that the project has not independently verified."
+            if run.payload is not None
+            else "**Input data.** This run uses modelled hourly profiles for screening. They represent assumptions about weather, demand and grid conditions.",
+            "**Eingabedaten.** Dieser Lauf nutzt hochgeladene Stundenwerte, die das Projekt nicht unabhängig geprüft hat."
+            if run.payload is not None
+            else "**Eingabedaten.** Dieser Lauf nutzt modellierte Stundenprofile zur Vorprüfung. Sie bilden Annahmen zu Wetter, Bedarf und Netzbedingungen ab.",
+        ))
+        st.caption(tr("The run ID below links these settings to the downloaded files.",
+                      "Die Lauf-ID unten ordnet die heruntergeladenen Dateien diesen Einstellungen zu."))
         st.json(run.metadata())
         for item in LIMITATIONS:
             st.markdown(f"- {item}")

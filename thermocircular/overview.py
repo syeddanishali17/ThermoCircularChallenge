@@ -8,21 +8,21 @@ from .config import DEFAULT, Settings
 from .engineering import buyer_monthly, installed_comparison
 from .investment import gates
 from .model import comparator, nameplate, simulate
-from .ui import activate_preset, baseline, fmt, navigate, note, option_labels, svg_asset, tr, workspace_bar
+from .ui import activate_preset, baseline, engineering_markup, fmt, navigate, note, option_labels, svg_asset, tr, workspace_bar
 
 
 def hero():
     details = (
-        (tr("Initial IT stage", "Erste IT-Stufe"), "50 MW"),
-        (tr("Full-build IT", "IT-Vollausbau"), "75 MW"),
-        (tr("Proposed connection", "Vorgeschlagener Netzanschluss"), "100 MW"),
-        (tr("First heat module", "Erstes Wärmemodul"), "5 MWth"),
+        (tr("Initial computing capacity", "IT-Leistung zum Start"), "50 MW"),
+        (tr("Computing capacity at full build", "IT-Leistung im Vollausbau"), "75 MW"),
+        (tr("Proposed grid connection", "Geplanter Netzanschluss"), "100 MW"),
+        (tr("First heat pump capacity", "Leistung der ersten Wärmepumpe"), "5 MWth"),
     )
-    rows = "".join(f'<div><dt>{escape(label)}</dt><dd>{escape(value)}</dd></div>'
+    rows = "".join(f'<div><dt>{escape(label)}</dt><dd>{engineering_markup(value)}</dd></div>'
                    for label, value in details)
     intro = tr(
-        "A proposed AI data centre in Austria that supplies useful heat to a nearby customer while keeping server cooling independent.",
-        "Ein geplantes KI-Rechenzentrum in Österreich, das einen Abnehmer in der Nähe mit Wärme versorgt und seine Server unabhängig kühlt.",
+        "An Austrian data centre concept that turns server waste heat into a useful heat supply. The servers stay cool even when the customer needs no heat.",
+        "Ein österreichisches Rechenzentrumskonzept, das Serverabwärme nutzbar macht. Die Server bleiben auch dann gekühlt, wenn der Abnehmer keine Wärme braucht.",
     )
     paused = st.session_state.get("campus_motion_paused", False)
     source = svg_asset("campus-flow.svg", paused)
@@ -31,8 +31,10 @@ def hero():
              "Schematisches Rechenzentrum mit Serverracks, Wärmepumpe und Leitungen zu externen Gebäuden.")
     st.html(f"""<section class="tc-hero">
         <div>
-          <div class="tc-hero-brand"><img src="{mark}" alt=""><div class="tc-kicker">INFINEON INNOSCOPE 2026 / TU WIEN</div></div>
+          <div class="tc-hero-brand"><img src="{mark}" alt=""><div class="tc-kicker">Infineon InnoScope Challenge 2026</div></div>
           <h1>ThermoCircular<br><span>AI Campus</span></h1><p>{escape(intro)}</p>
+          <div class="tc-team"><strong>Syed Danish Ali &amp; Lara Haselsteiner</strong>
+            <span>TU Wien (Technische Universität Wien)</span></div>
         </div>
         <figure class="tc-campus">
           <img src="{source}" alt="{escape(alt)}">
@@ -42,13 +44,14 @@ def hero():
             <span class="tc-return-flow">{escape(tr("Cooling return", "Kühlrücklauf"))}</span>
           </figcaption>
         </figure>
-        <div class="tc-brief"><p>{escape(tr("Reference design", "Referenzentwurf"))}</p><dl>{rows}</dl></div>
+        <div class="tc-brief"><dl>{rows}</dl></div>
     </section>""")
     with st.container(key="campus_animation_control"):
         st.button(tr("Play campus animation", "Campus-Animation abspielen") if paused
                   else tr("Pause campus animation", "Campus-Animation pausieren"),
                   key="campus_motion", on_click=toggle_campus_motion,
-                  help=tr("Illustrative flows in the proposed campus.", "Schematische Flüsse für den geplanten Campus."))
+                  help=tr("Start or stop the moving energy flows in the campus illustration.",
+                          "Die animierten Energieflüsse in der Campusgrafik starten oder anhalten."))
 
 
 def toggle_campus_motion():
@@ -59,10 +62,10 @@ def project_story():
     with st.container(key="project_story"):
         st.subheader(tr("The challenge", "Die Herausforderung"))
         st.markdown(tr(
-            "AI servers need substantial electricity and continuous cooling. That cooling carries heat away from the servers. "
-            "A nearby customer can put some of that heat to use, but only when it needs heat and the temperature is high enough.",
-            "KI-Server brauchen viel Strom und müssen ständig gekühlt werden. Die Kühlung führt Wärme von den Servern ab. "
-            "Ein Abnehmer in der Nähe kann einen Teil dieser Wärme nutzen, wenn er gerade Wärme braucht und die Temperatur ausreicht.",
+            "AI servers use a lot of electricity and release heat whenever they run. A nearby customer can use some of that heat "
+            "when it has enough demand and the heat is delivered at the right temperature.",
+            "KI-Server verbrauchen viel Strom und geben im Betrieb Wärme ab. Ein Abnehmer in der Nähe kann einen Teil "
+            "davon nutzen, wenn genügend Bedarf besteht und die Wärme auf dem passenden Temperaturniveau ankommt.",
         ))
         st.subheader(tr("How the proposed campus works", "So funktioniert der geplante Campus"))
         steps = (
@@ -80,7 +83,8 @@ def project_story():
                 "Eine gedämmte Leitung bringt das Warmwasser zum Abnehmer. Ein Zähler erfasst die tatsächlich gelieferte Wärme.")),
         )
         cards = "".join(
-            f'<li><strong>{escape(title)}</strong><p>{escape(body)}</p></li>' for title, body in steps
+            f'<li><div class="tc-step-title"><span aria-hidden="true">{step}</span><strong>{escape(title)}</strong></div>'
+            f'<p>{escape(body)}</p></li>' for step, (title, body) in enumerate(steps, start=1)
         )
         fallback_title = tr("Cooling continues when heat delivery stops", "Die Kühlung läuft auch ohne Wärmelieferung weiter")
         fallback = tr(
@@ -103,16 +107,17 @@ def project_story():
         first_npv = fmt(one["heat_15y_NPV_MEUR"] - zero["heat_15y_NPV_MEUR"], signed=True)
         extra = fmt(two["delivered_heat_GWhth"] - one["delivered_heat_GWhth"])
         npv_loss = fmt(one["heat_15y_NPV_MEUR"] - two["heat_15y_NPV_MEUR"])
-        st.markdown(tr(
-            f"In the **audited baseline**, one 5 MW thermal module delivers **{delivered} GWh of heat per year**. "
-            f"The heat project has a 15-year net present value of **{first_npv} million euro**. A second module adds "
-            f"**{extra} GWh of heat per year** and reduces that value by **{npv_loss} million euro**. "
-            "The proposal therefore starts with one module and revisits expansion once metered demand, available grid capacity and costs support it.",
-            f"In der **geprüften Referenz** liefert ein Modul mit 5 MW Wärmeleistung **{delivered} GWh Wärme pro Jahr** "
-            f"bei einem Kapitalwert von **{first_npv} Millionen Euro** über 15 Jahre. Ein zweites Modul liefert "
-            f"zusätzlich **{extra} GWh Wärme pro Jahr** und senkt den Kapitalwert um **{npv_loss} Millionen Euro**. "
-            "Der Vorschlag beginnt daher mit einem Modul. Über den Ausbau wird anhand gemessener Nachfrage, verfügbarer Netzkapazität und Kosten entschieden.",
-        ))
+        with st.container(key="module_decision"):
+            st.markdown(tr(
+                f"In the **audited baseline**, the first 5 MW thermal module delivers **{delivered} GWh of heat per year** "
+                f"and has a 15-year net present value of **{first_npv} million euro**. A second module adds "
+                f"**{extra} GWh of heat per year** and reduces that value by **{npv_loss} million euro**. "
+                "Expansion depends on metered demand, available grid capacity and costs.",
+                f"In der **geprüften Referenz** liefert das erste Modul mit 5 MW Wärmeleistung **{delivered} GWh Wärme pro Jahr** "
+                f"bei einem Kapitalwert von **{first_npv} Millionen Euro** über 15 Jahre. Ein zweites Modul liefert "
+                f"zusätzlich **{extra} GWh Wärme pro Jahr** und senkt den Kapitalwert um **{npv_loss} Millionen Euro**. "
+                "Der Ausbau hängt vom gemessenen Bedarf, der verfügbaren Netzleistung und den Kosten ab.",
+            ))
         with st.expander(tr("Renewable power, hardware and site choice", "Erneuerbarer Strom, Hardware und Standortwahl")):
             st.markdown(tr(
                 "- **Renewable power.** Use on-site solar and check how much of the remaining electricity demand can be matched with contracted renewable generation each hour.\n"
@@ -130,23 +135,23 @@ def kpis(run):
     d = comparator(run.traces["D"], "Gas boiler", run.settings.gas_residual_t_mwh)
     delta = d["combined_ktCO2e"] - b["combined_ktCO2e"]
     values = (
-        (tr("Delivered heat"), fmt(r["delivered_heat_GWhth"]), "GWhₜₕ/yr",
+        (tr("Delivered heat"), fmt(r["delivered_heat_GWhth"]), tr("GWhth/yr", "GWhth/Jahr"),
          tr("At buyer meter", "Am Abnahmezähler"), "heat"),
-        (tr("Grid imports"), fmt(r["grid_GWh"]), "GWh/yr",
+        (tr("Grid imports"), fmt(r["grid_GWh"]), tr("GWh/yr", "GWh/Jahr"),
          tr("Physical campus imports", "Physischer Netzbezug"), "power"),
-        (tr("Heat-project NPV"), fmt(r["heat_15y_NPV_MEUR"], 2, True), "€m",
-         tr("15 years at 6%", "15 Jahre bei 6 %"), ""),
-        (tr("Annual IT electricity"), fmt(r["IT_GWh"], 1), "GWh/yr",
+        (tr("Heat investment value", "Kapitalwert der Wärmeanlage"), fmt(r["heat_15y_NPV_MEUR"], 2, True), tr("€m", "Mio. €"),
+         tr("Net present value over 15 years at 6%", "Kapitalwert über 15 Jahre bei 6 %"), "investment"),
+        (tr("Annual IT electricity"), fmt(r["IT_GWh"], 1), tr("GWh/yr", "GWh/Jahr"),
          tr("IT workload", "IT-Last"), "power"),
-        (tr("Joint emissions Δ", "Gemeinsame Emissionen Δ"), fmt(delta, 2, True), "ktCO₂e/yr",
-         tr("D minus B, with backup", "D minus B, mit Ersatzwärme"), ""),
-        (tr("Hourly matching"), fmt(r["hourly_renewable_matching_pct"]), "%",
-         tr("Renewable electricity", "Erneuerbarer Strom"), ""),
+        (tr("Change in joint emissions", "Änderung der gemeinsamen Emissionen"), fmt(delta, 2, True), tr("kt CO₂e/yr", "kt CO₂e/Jahr"),
+         tr("Versus no heat recovery, with gas backup", "Gegenüber Betrieb ohne Wärmenutzung, mit Gasreserve"), "emissions"),
+        (tr("Hourly renewable matching", "Stündliche Deckung mit Erneuerbaren"), fmt(r["hourly_renewable_matching_pct"]), "%",
+         tr("Share of campus electricity matched by renewables", "Anteil des Campusstroms mit zeitgleicher erneuerbarer Erzeugung"), "renewable"),
     )
     cards = []
     for label, value, unit, detail, kind in values:
         cards.append(f'<div class="tc-kpi {kind}"><dt>{escape(label)}</dt>'
-                     f'<dd><strong>{escape(value)}</strong> <span>{escape(unit)}</span>'
+                     f'<dd><strong>{escape(value)}</strong> <span>{engineering_markup(unit)}</span>'
                      f'<small>{escape(detail)}</small></dd></div>')
     st.html(f'<dl class="tc-kpi-grid">{"".join(cards)}</dl>')
 
@@ -253,13 +258,17 @@ def page(run):
         left, right, third = st.columns(3)
         left.button(tr("Open scenario lab", "Szenarien öffnen"), type="primary", on_click=navigate, args=("Scenario lab",), width="stretch")
         right.button(tr("Winter price stress", "Winter-Strompreis"), on_click=activate_preset,
-                     args=("High winter price", "Heat dispatch"), width="stretch")
+                     args=("High winter price", "Heat dispatch"), width="stretch",
+                     help=tr("Show how higher winter electricity prices affect when the heat pump runs.",
+                             "Zeigt, wie sich höhere Winterstrompreise auf den Betrieb der Wärmepumpe auswirken."))
         third.button(tr("Buyer outage", "Abnahmeausfall"), on_click=activate_preset,
-                     args=("Heat buyer outage 336 h", "Heat dispatch"), width="stretch")
+                     args=("Heat buyer outage 336 h", "Heat dispatch"), width="stretch",
+                     help=tr("Model two weeks in winter when the customer cannot take campus heat.",
+                             "Simuliert zwei Winterwochen, in denen der Abnehmer keine Wärme vom Campus beziehen kann."))
     st.subheader(tr("Annual performance", "Jahresergebnisse"))
     kpis(run)
-    st.caption(tr("Case D · 8,760 fixed-CET hours · engineering screening. Emissions use the current buyer fuel factor as the backup boundary.",
-                  "Fall D · 8.760 Stunden in fester MEZ · technische Vorprüfung. Emissionen verwenden den aktuellen Brennstofffaktor für Ersatzwärme."))
+    st.caption(tr("Modelled annual results for the proposed design (Case D). The emissions comparison includes the customer's backup heat.",
+                  "Modellierte Jahresergebnisse für das vorgeschlagene Konzept (Fall D). Der Emissionsvergleich berücksichtigt die Ersatzwärme des Abnehmers."))
     a, b = st.tabs((tr("Buyer heat by month", "Wärmeabnahme nach Monat"), tr("System architecture", "Systemarchitektur")))
     with a:
         buyer_monthly(run)

@@ -60,6 +60,9 @@ def test_custom_run_compare_save_reopen_reset(app):
 
 
 def test_project_story_keeps_baseline_after_scenario_change(app):
+    markup = [item.proto.body for item in app.get("html")]
+    assert any("Syed Danish Ali" in body and "Lara Haselsteiner" in body and "TU Wien" in body for body in markup)
+    assert all("Proxy profiles" not in body and "fixed CET" not in body for body in markup)
     button(app, "Winter price stress").click().run()
     assert app.session_state["custom_run"] is not None
     app.selectbox(key="section_picker").set_value("Overview").run()
@@ -71,6 +74,9 @@ def test_project_story_keeps_baseline_after_scenario_change(app):
     assert "Die Herausforderung" in [item.value for item in app.subheader]
     summary = next(item.value for item in app.markdown if "geprüften Referenz" in item.value)
     assert all(number in summary for number in ("27,63", "+0,36", "10,18", "2,01"))
+    app.selectbox(key="section_picker").set_value("Evidence & exports").run()
+    assert any("ohne Sommerzeitumstellung" in item.value for item in app.markdown)
+    assert any(app.session_state["custom_run"].id in item.value for item in app.json)
 
 
 def test_custom_failure_preserves_baseline(app):

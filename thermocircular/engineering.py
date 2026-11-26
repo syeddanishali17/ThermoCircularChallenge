@@ -83,7 +83,9 @@ def power(run):
         metrics([
             ("Hourly matching", f"{fmt(r['hourly_renewable_matching_pct'])}%", tr("On-site PV used plus matched offsite energy, divided by gross campus use.", "Genutzte PV plus zeitgleich zugeordneter externer Strom geteilt durch Bruttolast.")),
             (tr("Annual generation ratio", "Jährliches Erzeugungsverhältnis"), f"{fmt(r['annual_renewable_matching_pct'])}%", tr("Annual supply compared with demand. Surplus generation can take this ratio above 100%.", "Jahreserzeugung im Verhältnis zum Bedarf. Überschüsse können den Wert über 100 % erhöhen.")),
-            (tr("Fully matched hours", "Vollständig gedeckte Stunden"), f"{fmt(r['wholly_matched_hours'], 0)} / 8,760", tr("Each hour is evaluated separately.", "Jede Stunde wird einzeln bewertet.")),
+        (tr("Fully matched hours", "Vollständig gedeckte Stunden"), f"{fmt(r['wholly_matched_hours'], 0)} / {fmt(8760, 0)}",
+         tr("Hours when on-site solar and matched off-site renewables cover all campus electricity use.",
+            "Stunden, in denen PV vor Ort und zeitgleich zugeordnete externe Erzeugung den gesamten Strombedarf decken.")),
         ])
         bars(ledger, {"offsite_matched_GWh": tr("Offsite matched", "Extern zeitgleich"),
                       "PV_used_GWh": tr("On-site PV used", "PV-Eigenverbrauch"),
@@ -146,7 +148,8 @@ def heat(run):
         start, end = t.index.get_loc(visible.index[0]), t.index.get_loc(visible.index[-1])
         ix = start if start == end else st.slider(tr("Inspect hour in this window", "Stunde im Zeitraum prüfen"), int(start), int(end),
                         value=int(start), key=f"inspect_hour_{start}_{end}",
-                        format="%d", help="0 = 2025-01-01 00:00 CET; each increment is one hour.")
+                        format="%d", help=tr("Each step is one hour. Hour 0 is midnight on 1 January 2025, CET.",
+                                             "Jeder Schritt ist eine Stunde. Stunde 0 beginnt am 1. Januar 2025 um 00:00 MEZ."))
         hourly_detail(run, case, r, t.iloc[ix], t.index[ix])
     with tabs[2]:
         fig = go.Figure()
@@ -197,7 +200,9 @@ def installed_comparison(run):
     metrics([
         (tr("Operator NPV Δ", "Betreiber-Kapitalwert Δ"), f"{fmt(delta['operator_delta_MEUR'], 3, True)} €m", tr("Coordinated minus fixed under equal hardware.", "Koordiniert abzüglich fest bei gleicher Anlage.")),
         (tr("Buyer backup Δ", "Ersatzwärme Δ"), f"{fmt(delta['backup_delta_GWhth'], 2, True)} GWhth", tr("Additional annual backup volume.", "Zusätzliche jährliche Ersatzwärme.")),
-        (tr("Joint emissions Δ", "Gemeinsame Emissionen Δ"), f"{fmt(delta['emissions_delta_ktCO2e'], 3, True)} kt", tr("Generation plus dispatch-basis buyer backup.", "Stromerzeugung plus Ersatzwärme gemäß Betriebsannahme.")),
+        (tr("Joint emissions Δ", "Gemeinsame Emissionen Δ"), f"{fmt(delta['emissions_delta_ktCO2e'], 3, True)} kt CO₂e",
+         tr("Coordinated minus fixed operation. Includes campus electricity and the customer's backup heat.",
+            "Koordinierter abzüglich fester Betrieb, einschließlich Campusstrom und Ersatzwärme des Abnehmers.")),
     ])
     penalty = delta["erasing_penalty_EUR_MWh"]
     st.write(f"{tr('Backup price that erases operator gain', 'Ersatzwärmepreis, der den Vorteil aufhebt')} · "

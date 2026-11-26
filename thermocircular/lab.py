@@ -24,7 +24,7 @@ GROUPS = (
         ("nonpipe_stage_one_m", "First-stage cost excluding pipe [€m]", "Kosten Stufe 1 ohne Leitung [Mio. €]", .5),
         ("stage_two_m", "Incremental second-stage cost [€m]", "Zusatzkosten Stufe 2 [Mio. €]", .5),
         ("minimum_increment_gwh", "Minimum stage heat gain [GWhth/yr]", "Mindestwärme je Stufe [GWhth/Jahr]", .5),
-        ("gas_residual_t_mwh", "Dispatch buyer factor [tCO₂e/MWhth]", "Emissionsfaktor Abnehmer [tCO₂e/MWhth]", .01),
+        ("gas_residual_t_mwh", "Buyer backup emissions [t CO₂e/MWhth]", "Emissionen der Ersatzwärme [t CO₂e/MWhth]", .01),
     )),
     ("Electricity and resources", "Strom und Ressourcen", (
         ("pv_mwp", "On-site PV [MWp]", "PV vor Ort [MWp]", .5),
@@ -34,7 +34,7 @@ GROUPS = (
         ("wind_mw", "Illustrative wind [MW]", "Exemplarische Windkraft [MW]", 1.0),
         ("wind_fraction", "Wind yield multiplier", "Windkraftertragsfaktor", .05),
         ("price_multiplier", "Power price multiplier", "Strompreisfaktor", .05),
-        ("carbon_g", "Import carbon proxy [gCO₂e/kWh]", "Emissionsfaktor Netz [gCO₂e/kWh]", 1.0),
+        ("carbon_g", "Grid emissions factor [g CO₂e/kWh]", "Emissionsfaktor Netz [g CO₂e/kWh]", 1.0),
     )),
     ("Stress and hardware", "Stresstest und Hardware", (
         ("hot_delta_c", "Summer temperature change [°C]", "Sommer-Temperaturänderung [°C]", .5),
@@ -54,6 +54,29 @@ CASE_COLS = {
     "combined_gas_comparator_ktCO2e": "Joint dispatch-basis ktCO₂e/yr",
     "heat_15y_NPV_MEUR": "Heat NPV €m", "capex_heat_MEUR": "Heat capex €m",
     "hourly_grid_excess_MW": "Hourly grid excess MW",
+}
+
+FIELD_HELP = {
+    "module_mw": (
+        "Maximum heat output of one heat pump before losses in the pipe.",
+        "Maximale Wärmeleistung einer Wärmepumpe vor den Verlusten in der Leitung.",
+    ),
+    "heat_scale": (
+        "Scales the customer's hourly heat demand. Use 1 for the reference demand or 0.5 for half.",
+        "Skaliert den stündlichen Wärmebedarf des Abnehmers. 1 entspricht der Referenz, 0,5 der Hälfte.",
+    ),
+    "cop": (
+        "Heat output per unit of electricity used by the heat pump. With 0, the model estimates COP from outdoor temperature.",
+        "Wärmeleistung je Einheit Stromverbrauch der Wärmepumpe. Bei 0 schätzt das Modell den COP aus der Außentemperatur.",
+    ),
+    "heat_tariff": (
+        "Revenue per megawatt-hour of heat measured at the customer meter.",
+        "Erlös je Megawattstunde Wärme, die am Abnahmezähler gemessen wird.",
+    ),
+    "gas_residual_t_mwh": (
+        "Emissions per unit of backup heat. The heat pump must stay below this threshold in coordinated operation.",
+        "Emissionen je Einheit Ersatzwärme. Im koordinierten Betrieb muss die Wärmepumpe unter der Schwelle bleiben.",
+    ),
 }
 
 
@@ -77,8 +100,9 @@ def field(col, seed, suffix, field_info):
                 if kind == "gt":
                     value = value + (1 if isinstance(step, int) else .01)
                 kwargs[widget] = type(step)(value)
+    help_text = FIELD_HELP.get(key)
     return col.number_input(tr(en, de), value=type(step)(getattr(seed, key)), step=step,
-                            key=f"{key}_{suffix}", **kwargs)
+                            key=f"{key}_{suffix}", help=tr(*help_text) if help_text else None, **kwargs)
 
 
 def preset_seed():
@@ -99,6 +123,8 @@ def inputs(run):
     st.session_state["preset_choice"] = current
     c1.selectbox(tr("Load assumptions from a preset", "Annahmen einer Vorlage laden"), choices,
                  key="preset_choice", on_change=preset_seed,
+                 help=tr("Loads values into the form. Select Run simulation to update the charts and results.",
+                         "Lädt Werte in das Formular. Simulation starten aktualisiert Diagramme und Ergebnisse."),
                  format_func=option_labels(choices, lambda choice: tr(choice, "Eigene Eingaben")
                                              if choice == "Custom inputs" else choice))
     c2.button(tr("Reset to baseline"), on_click=reset, width="stretch")
@@ -112,8 +138,8 @@ def inputs(run):
     feedback = st.empty()
     if st.session_state.pop("lab_run_completed", False):
         feedback.success(tr(
-            f"Simulation complete. Results are ready in A–D results and Compare runs. Run ID: {run.id}",
-            f"Simulation abgeschlossen. Die Ergebnisse stehen unter Ergebnisse A–D und Läufe vergleichen. Lauf-ID: {run.id}",
+            "Simulation complete. See A–D results to review the output or Compare runs to compare scenarios.",
+            "Simulation abgeschlossen. Unter Ergebnisse A–D stehen die Resultate. Unter Läufe vergleichen kannst du Szenarien vergleichen.",
         ))
     with st.form("scenario_form"):
         submitted = st.form_submit_button(tr("Run simulation"), type="primary", width="stretch")
@@ -123,7 +149,9 @@ def inputs(run):
                               key=f"site_{suffix}", format_func=option_labels(sites, lambda x: tr(x, "Wien" if x == "Vienna" else x)))
         modules = fixed.selectbox(tr("Fixed equipment for dispatch comparison", "Installierte Module für Betriebsvergleich"),
                                   (0, 1, 2), index=st.session_state.get("lab_modules", run.fixed_modules),
-                                  key=f"fixed_{suffix}")
+                                  key=f"fixed_{suffix}",
+                                  help=tr("Both operating strategies use this number of heat pumps. Case D separately tests whether to invest.",
+                                          "Beide Betriebsstrategien nutzen diese Anzahl Wärmepumpen. Fall D prüft die Investition gesondert."))
         values = {"site": site}
         for i, (en, de, fields) in enumerate(GROUPS):
             with st.expander(tr(en, de), expanded=i == 0):
