@@ -13,34 +13,40 @@ from .config import DEFAULT, PRESETS, Settings
 from .model import ROOT, simulate
 from .storage import Store
 
-INK = "#152b3d"
-TEAL = "#08756a"
-BLUE = "#2e62a1"
-SOFT = "#3b8193"
-ORANGE = "#9c4b18"
-GRAY = "#667b92"
+INK = "#1d2c29"
+TEAL = "#1a5d4f"
+BLUE = "#285e91"
+HEAT = "#a14b23"
+BACKUP = "#586a71"
+RENEWABLE = "#357451"
+SOFT = "#487f87"
+ORANGE = "#91631a"
+VIOLET = "#715778"
+GRAY = "#62716a"
 CHART_FONT = '"Source Sans", "Source Sans 3", "Segoe UI", Arial, sans-serif'
 THERMAL_UNIT = re.compile(r"\b(kW|MW|kWh|MWh|GWh)th\b")
-COLORS = (TEAL, BLUE, ORANGE, SOFT, "#735497", "#596577", GRAY)
+COLORS = (TEAL, BLUE, HEAT, VIOLET, SOFT, ORANGE, GRAY)
 SERIES_COLORS = {
     "grid_MW": BLUE,
-    "IT_MW": "#735497",
-    "campus_gross_MW": "#304659",
-    "pv_MW": "#32844a",
+    "IT_MW": VIOLET,
+    "campus_gross_MW": INK,
+    "pv_MW": RENEWABLE,
     "grid_limit_MW": ORANGE,
     "heat_plant_MW": TEAL,
-    "offsite_matched_GWh": "#32844a",
-    "PV_used_GWh": "#7a9f35",
+    "offsite_matched_GWh": RENEWABLE,
+    "PV_used_GWh": "#8c9b53",
     "unmatched_grid_GWh": BLUE,
-    "required_heat_MWth": "#304659",
+    "required_heat_MWth": INK,
     "accepted_heat_MWth": SOFT,
-    "delivered_MWth": TEAL,
-    "delivered_GWhth": TEAL,
-    "backup_MWth": ORANGE,
-    "backup_GWhth": ORANGE,
-    "Replay delivered MWth": TEAL,
-    "Replay backup MWth": ORANGE,
+    "delivered_MWth": HEAT,
+    "delivered_GWhth": HEAT,
+    "backup_MWth": BACKUP,
+    "backup_GWhth": BACKUP,
+    "Replay delivered MWth": HEAT,
+    "Replay backup MWth": BACKUP,
 }
+SERIES_DASH = {"grid_limit_MW": "dash", "required_heat_MWth": "dash",
+               "backup_MWth": "dot", "Replay backup MWth": "dot"}
 
 PAGES = {
     "Overview": "Übersicht", "Scenario lab": "Szenarien", "Power & renewables": "Strom & Erneuerbare",
@@ -201,8 +207,8 @@ def note(title, detail):
 def chart(fig, y=None, x=None, height=350):
     show_legend = len([trace for trace in fig.data if trace.showlegend is not False
                        and trace.type != "heatmap"]) > 1
-    fig.update_yaxes(automargin=True, title_standoff=13, gridcolor="#e1e9f2", zerolinecolor="#b9c8d7")
-    fig.update_xaxes(automargin=True, title_standoff=16, gridcolor="#edf2f4", nticks=4)
+    fig.update_yaxes(automargin=True, title_standoff=13, gridcolor="#e6e9e2", zerolinecolor="#bdc6bc")
+    fig.update_xaxes(automargin=True, title_standoff=16, gridcolor="#f0f1eb", nticks=4)
     if y is not None:
         y_label = engineering_markup(y)
         fig.update_yaxes(title_text=y_label)
@@ -232,7 +238,7 @@ def lines(frame, names, unit, height=350):
     for index, (key, label) in enumerate(names.items()):
         fig.add_scatter(x=frame.index, y=frame[key], name=label, mode="lines",
                         line=dict(color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]), width=1.8,
-                                  dash="dash" if key in ("grid_limit_MW", "required_heat_MWth") else "solid"),
+                                  dash=SERIES_DASH.get(key, "solid")),
                         hovertemplate="%{y:,.2f} " + engineering_markup(unit) + "<br>" + time_format)
     chart(fig, unit, height=height)
 
@@ -246,6 +252,7 @@ def bars(frame, names, unit, stack=False, height=350):
     for index, (key, label) in enumerate(names.items()):
         fig.add_bar(x=values, y=frame[key], name=label,
                     marker_color=SERIES_COLORS.get(key, COLORS[index % len(COLORS)]),
+                    marker_pattern_shape="/" if key == "backup_GWhth" else "",
                     hovertemplate="%{y:,.2f} " + engineering_markup(unit) + ("<br>%{x|%b %Y}" if months else "<br>%{x}"))
     fig.update_layout(barmode="stack" if stack else "group")
     chart(fig, unit, height=height)

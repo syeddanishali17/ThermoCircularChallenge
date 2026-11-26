@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from .model import feasible, installed_tradeoff, monthly, nameplate
-from .ui import BLUE, TEAL, bars, case_label, chart, fmt, heading, lines, metrics, note, option_labels, table, tr
+from .ui import HEAT, INK, bars, case_label, chart, fmt, heading, lines, metrics, note, option_labels, table, tr
 
 
 def case_choice(key):
@@ -153,8 +153,11 @@ def heat(run):
         hourly_detail(run, case, r, t.iloc[ix], t.index[ix])
     with tabs[2]:
         fig = go.Figure()
-        for field, name, color in (("required_heat_MWth", tr("Buyer heat required"), BLUE), ("delivered_MWth", tr("Delivered heat"), TEAL)):
-            fig.add_scatter(x=np.arange(1, len(t) + 1), y=np.sort(t[field])[::-1], name=name, line=dict(color=color))
+        for field, name, color, dash in (
+            ("required_heat_MWth", tr("Buyer heat required"), INK, "dash"),
+            ("delivered_MWth", tr("Delivered heat"), HEAT, "solid"),
+        ):
+            fig.add_scatter(x=np.arange(1, len(t) + 1), y=np.sort(t[field])[::-1], name=name, line=dict(color=color, dash=dash))
         chart(fig, "MWth", tr("Hours at or above power", "Stunden ab dieser Leistung"))
         lines(t.resample("D").mean(), {"COP": tr("Daily average equipment COP", "Mittlerer Tages-COP")}, "COP", height=270)
     with tabs[3]:

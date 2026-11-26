@@ -8,7 +8,7 @@ from .config import DEFAULT, Settings
 from .engineering import buyer_monthly, installed_comparison
 from .investment import gates
 from .model import comparator, nameplate, simulate
-from .ui import activate_preset, baseline, engineering_markup, fmt, navigate, note, option_labels, svg_asset, tr, workspace_bar
+from .ui import BACKUP, BLUE, HEAT, INK, activate_preset, baseline, engineering_markup, fmt, navigate, note, option_labels, svg_asset, tr, workspace_bar
 
 
 def hero():
@@ -201,8 +201,8 @@ def campus_schematic():
         (212, 52, tr("IT and cooling", "IT und Kühlung"), "electric"),
         (406, 52, tr("Heat pump", "Wärmepumpe"), "thermal"),
         (600, 52, tr("Buyer meter", "Abnahmezähler"), "thermal"),
-        (212, 151, tr("Heat rejection", "Wärmeabfuhr"), "thermal"),
-        (600, 151, tr("Buyer backup", "Ersatzwärme"), "thermal"),
+        (212, 151, tr("Heat rejection", "Wärmeabfuhr"), "fallback"),
+        (600, 151, tr("Buyer backup", "Ersatzwärme"), "fallback"),
     )
     boxes = "".join(
         f'<g class="{kind}"><rect x="{x}" y="{y}" width="149" height="44" rx="9"/>'
@@ -212,11 +212,16 @@ def campus_schematic():
     paths = (
         ("M167 74H210", "electric"), ("M93 51V23H480V50", "electric"),
         ("M361 74H404", "thermal"), ("M555 74H598", "thermal"),
-        ("M286 96V149", "thermal"), ("M674 151V98", "thermal"),
+        ("M286 96V149", "fallback"), ("M674 151V98", "fallback"),
     )
     arrows = "".join(
         f'<path d="{path}" class="{kind}" marker-end="url(#tc-arrow-{kind})"/>'
         for path, kind in paths
+    )
+    markers = "".join(
+        f'<marker id="tc-arrow-{kind}" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">'
+        f'<path d="M0 0L7 3.5L0 7Z" fill="{color}"/></marker>'
+        for kind, color in (("electric", BLUE), ("thermal", HEAT), ("fallback", BACKUP))
     )
     label = tr("Conceptual campus energy flows", "Konzeptionelle Energieflüsse des Campus")
     description = tr(
@@ -227,20 +232,17 @@ def campus_schematic():
       <title>{escape(label)}</title>
       <desc>{escape(description)}</desc>
       <style>
-        text {{ font: 650 15px Arial, sans-serif; fill: #13283b; }}
-        .electric rect {{ fill: #edf4ff; stroke: #a7c2e5; }}
-        .thermal rect {{ fill: #e8f5ef; stroke: #a5cec2; }}
-        path.electric {{ stroke: #3263a2; }}
-        path.thermal {{ stroke: #0c6b60; }}
-        .tc-electric-label {{ fill: #3263a2; }}
-        .tc-thermal-label {{ fill: #0c6b60; }}
+        text {{ font: 650 15px Arial, sans-serif; fill: {INK}; }}
+        .electric rect {{ fill: #e9eff5; stroke: #bdcddd; }}
+        .thermal rect {{ fill: #f6eae2; stroke: #e2cdbf; }}
+        .fallback rect {{ fill: #eeeee8; stroke: #d7dbd3; }}
+        path.electric {{ stroke: {BLUE}; }}
+        path.thermal {{ stroke: {HEAT}; }}
+        path.fallback {{ stroke: {BACKUP}; stroke-dasharray: 4 3; }}
+        .tc-electric-label {{ fill: {BLUE}; }}
+        .tc-thermal-label {{ fill: {HEAT}; }}
       </style>
-      <defs>
-        <marker id="tc-arrow-electric" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-          <path d="M0 0L7 3.5L0 7Z" fill="#3263a2"/></marker>
-        <marker id="tc-arrow-thermal" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-          <path d="M0 0L7 3.5L0 7Z" fill="#0c6b60"/></marker>
-      </defs>
+      <defs>{markers}</defs>
       <g class="tc-arrows" fill="none" stroke-width="2.5">{arrows}</g>
       {boxes}
       <text x="18" y="126" class="tc-electric-label">{escape(tr("Electricity [MW]", "Strom [MW]"))}</text>

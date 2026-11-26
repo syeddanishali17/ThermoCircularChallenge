@@ -1,18 +1,18 @@
 [theme]
 base = "light"
-primaryColor = "#08756A"
-backgroundColor = "#F7FAFC"
-secondaryBackgroundColor = "#ECF2F7"
-textColor = "#152B3D"
+primaryColor = "#1A5D4F"
+backgroundColor = "#F8F7F3"
+secondaryBackgroundColor = "#EEEEE8"
+textColor = "#1D2C29"
 font = "sans-serif"
 baseFontSize = 16
-linkColor = "#2E62A1"
-borderColor = "#CDDBE5"
-dataframeHeaderBackgroundColor = "#EAF1F6"
+linkColor = "#285E91"
+borderColor = "#D7DBD3"
+dataframeHeaderBackgroundColor = "#EEEEE8"
 showWidgetBorder = true
 
 [theme.sidebar]
-backgroundColor = "#ECF2F7"
+backgroundColor = "#EEEEE8"
 secondaryBackgroundColor = "#FFFFFF"
 
 [server]
